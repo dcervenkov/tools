@@ -10,12 +10,24 @@ to a special dir for later use or deletion or whatever.
 __author__ = "Daniel Cervenkov"
 __date__ = "Oct. 8, 2015"
 
+import argparse
 import os
 import sys
 import shutil
 
 PIC_SUFFIXES = (".png", ".gif", ".pdf", ".ps", ".jpg", ".jpeg")
 NOT_USED_DIR = "unused_pics"
+
+def decode_arguments():
+    """Decode CLI arguments"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir")
+    parser.add_argument("files", nargs="+")
+    parser.add_argument("-D", "--dry-run", action="store_true",
+                        help="don't move any files, just list what would be done")
+    args = parser.parse_args()
+
+    return args.dry_run, args.dir, args.files
 
 
 def get_pics_from_tex(tex_files):
@@ -42,7 +54,7 @@ def get_pics_from_dir(pic_dir):
     return pics
 
 
-def move_unused_files(all_files, used_files, directory):
+def move_unused_files(all_files, used_files, used_dir, unused_dir, dry_run):
     """Move files not present in the second list to directory."""
     num_moved = 0
     for all_file in all_files:
@@ -50,19 +62,24 @@ def move_unused_files(all_files, used_files, directory):
         # as LaTeX can do both
         if ((all_file.rsplit('.', 1)[0] not in used_files) and
                 (all_file not in used_files)):
-            new_path = os.path.join(directory, all_file)
+            relative_path = os.path.relpath(all_file, used_dir)
+            new_path = os.path.join(unused_dir, relative_path)
             new_dir_path = os.path.dirname(new_path)
 
             if not os.path.exists(new_dir_path):
                 os.makedirs(new_dir_path)
 
-            shutil.move(all_file, new_path)
+            if dry_run:
+                print("Move '{}' > '{}'".format(all_file, new_path))
+            else:
+                shutil.move(all_file, new_path)
+
             num_moved += 1
 
     return num_moved
 
 
-def delete_empty_dirs(path, delete_root=False):
+def delete_empty_dirs(path, dry_run, delete_root=False):
     """Delete empty folders contained in the path."""
     if not os.path.isdir(path):
         return
@@ -73,26 +90,20 @@ def delete_empty_dirs(path, delete_root=False):
         for element in contents:
             full_path = os.path.join(path, element)
             if os.path.isdir(full_path):
-                delete_empty_dirs(full_path, True)
+                delete_empty_dirs(full_path, dry_run, True)
 
     # if folder empty, delete it
     contents = os.listdir(path)
     if not contents and delete_root:
-        os.rmdir(path)
+        if dry_run:
+            print("Delete empty directory '{}'".format(path))
+        else:
+            os.rmdir(path)
 
 
 def main():
     """Main."""
-    if len(sys.argv) < 3:
-        print("ERROR: Not enough arguments!")
-        print("USAGE: {0} TEX-FILES... PICS-DIR".format(sys.argv[0]))
-        sys.exit(1)
-
-
-    num_args = len(sys.argv)
-
-    tex_filenames = sys.argv[1:(num_args-1)]
-    pic_dir = sys.argv[num_args-1]
+    dry_run, pic_dir, tex_filenames = decode_arguments()
 
     for tex_filename in tex_filenames:
         if not os.path.isfile(tex_filename):
@@ -103,11 +114,11 @@ def main():
         print("ERROR: Directory {0} not found!".format(pic_dir))
         sys.exit(3)
 
-
     real_paths = get_pics_from_dir(pic_dir)
     tex_paths = get_pics_from_tex(tex_filenames)
-    num_moved = move_unused_files(real_paths, tex_paths, NOT_USED_DIR)
-    delete_empty_dirs(pic_dir)
+    unused_dir = os.path.join(os.path.split(pic_dir)[0], NOT_USED_DIR)
+    num_moved = move_unused_files(real_paths, tex_paths, pic_dir, unused_dir, dry_run)
+    delete_empty_dirs(pic_dir, dry_run)
 
     print("Moved " + str(num_moved) +
           " unused files to directory '" + NOT_USED_DIR + "'.")
