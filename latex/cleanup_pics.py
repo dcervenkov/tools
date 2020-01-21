@@ -57,6 +57,7 @@ def get_pics_from_dir(pic_dir):
 def move_unused_files(all_files, used_files, used_dir, unused_dir, dry_run):
     """Move files not present in the second list to directory."""
     num_moved = 0
+    size_moved = 0
     for all_file in all_files:
         # The rsplit removes the extension but we also test with the extension
         # as LaTeX can do both
@@ -66,17 +67,18 @@ def move_unused_files(all_files, used_files, used_dir, unused_dir, dry_run):
             new_path = os.path.join(unused_dir, relative_path)
             new_dir_path = os.path.dirname(new_path)
 
-            if not os.path.exists(new_dir_path):
-                os.makedirs(new_dir_path)
-
-            if dry_run:
-                print("Move '{}' > '{}'".format(all_file, new_path))
-            else:
-                shutil.move(all_file, new_path)
-
+            size_moved += os.path.getsize(all_file)
             num_moved += 1
 
-    return num_moved
+            if dry_run:
+                print(f"Move '{all_file}' > '{new_path}'")
+            else:
+                if not os.path.exists(new_dir_path):
+                    os.makedirs(new_dir_path)
+                shutil.move(all_file, new_path)
+
+
+    return num_moved, size_moved
 
 
 def delete_empty_dirs(path, dry_run, delete_root=False):
@@ -96,9 +98,10 @@ def delete_empty_dirs(path, dry_run, delete_root=False):
     contents = os.listdir(path)
     if not contents and delete_root:
         if dry_run:
-            print("Delete empty directory '{}'".format(path))
+            print(f"Delete empty directory '{path}'")
         else:
             os.rmdir(path)
+        delete_empty_dirs.num_deleted += 1
 
 
 def main():
@@ -107,21 +110,23 @@ def main():
 
     for tex_filename in tex_filenames:
         if not os.path.isfile(tex_filename):
-            print("ERROR: File {0} not found!".format(tex_filename))
+            print(f"ERROR: File {tex_filename} not found!")
             sys.exit(2)
 
     if not os.path.isdir(pic_dir):
-        print("ERROR: Directory {0} not found!".format(pic_dir))
+        print(f"ERROR: Directory {pic_dir} not found!")
         sys.exit(3)
 
     real_paths = get_pics_from_dir(pic_dir)
     tex_paths = get_pics_from_tex(tex_filenames)
     unused_dir = os.path.join(os.path.split(pic_dir)[0], NOT_USED_DIR)
-    num_moved = move_unused_files(real_paths, tex_paths, pic_dir, unused_dir, dry_run)
+    num_moved, size_moved = move_unused_files(real_paths, tex_paths, pic_dir, unused_dir, dry_run)
+    delete_empty_dirs.num_deleted = 0
     delete_empty_dirs(pic_dir, dry_run)
 
-    print("Moved " + str(num_moved) +
-          " unused files to directory '" + NOT_USED_DIR + "'.")
+    print(f"Moved {num_moved} ({size_moved / (1024 * 1024):.1f} MB) unused files to directory '{NOT_USED_DIR}'.")
+    if delete_empty_dirs.num_deleted:
+        print(f"Deleted {delete_empty_dirs.num_deleted} empty directories.")
 
 
 if __name__ == "__main__":
