@@ -18,6 +18,7 @@ import shutil
 PIC_SUFFIXES = (".png", ".gif", ".pdf", ".ps", ".jpg", ".jpeg")
 NOT_USED_DIR = "unused_pics"
 
+
 def decode_arguments():
     """Decode CLI arguments"""
     parser = argparse.ArgumentParser()
@@ -40,6 +41,12 @@ def get_pics_from_tex(tex_files):
             if "includegraphics" in line:
                 beg = line.index('{')
                 end = line.index('}')
+                pics.append(line[beg+1:end])
+            elif "begin{overpic}" in line:
+                # overpic lines have two sets of {}; skip first
+                skip = line.index('}')
+                beg = line.index('{', skip + 1)
+                end = line.index('}', skip + 1)
                 pics.append(line[beg+1:end])
     return pics
 
@@ -76,7 +83,6 @@ def move_unused_files(all_files, used_files, used_dir, unused_dir, dry_run):
                 if not os.path.exists(new_dir_path):
                     os.makedirs(new_dir_path)
                 shutil.move(all_file, new_path)
-
 
     return num_moved, size_moved
 
@@ -124,7 +130,8 @@ def main():
     delete_empty_dirs.num_deleted = 0
     delete_empty_dirs(pic_dir, dry_run)
 
-    print(f"Moved {num_moved} ({size_moved / (1024 * 1024):.1f} MB) unused files to directory '{NOT_USED_DIR}'.")
+    print(f"Moved {num_moved} ({size_moved / (1024 * 1024):.1f} MB) "
+          f"unused files to directory '{NOT_USED_DIR}'.")
     if delete_empty_dirs.num_deleted:
         print(f"Deleted {delete_empty_dirs.num_deleted} empty directories.")
 
