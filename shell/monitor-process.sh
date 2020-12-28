@@ -16,8 +16,8 @@ fi
 PROC_NAME=$1
 EMAIL=$(cat $HOME/.mailaddress)
 
-echo "Monitoring process '$PROC_NAME'."
-echo "Will send email to $EMAIL when the process exits."
+echo "[$(date '+%F %R')]" "Monitoring process '$PROC_NAME'."
+echo "[$(date '+%F %R')]" "Will send email to $EMAIL when the process exits."
 
 FOUND=false
 START=$(date +%s)
@@ -28,10 +28,10 @@ while true; do
 		sleep 6
 	else
 		if [ "$FOUND" = false ]; then
-			echo "Process '$PROC_NAME' not found."
+			echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found."
 			exit 0
 		fi
-		echo "Process '$PROC_NAME' not found anymore."
+		echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found anymore."
 
 		END=$(date +%s)
 		HOURS=$(echo "scale=0; ($END - $START) / 3600" | bc -l )
