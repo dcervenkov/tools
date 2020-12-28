@@ -1,23 +1,42 @@
 #!/bin/bash
 
+while getopts "m:u:" opt; do
+  case $opt in
+    m)
+        EMAIL="$OPTARG"
+    ;;
+    u)
+        USER="$OPTARG"
+    ;;
+    \?) echo "Invalid option -$OPTARG" >&2
+    ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
 if [ "$#" -ne 1 ]; then
     echo "ERROR: Must have 1 argument!"
-    echo "Usage: $0 PROCESS-NAME"
+    echo "Usage: $0 [OPTIONS] PROCESS-NAME"
     exit 1
 fi
 
-if [ ! -f $HOME/.mailaddress ]; then
-    echo "ERROR: Can't find file '$HOME/.mailaddress', please"\
-         "create it and populate it with the email address"\
-         "to which notifications should be sent."
+if [ ! -f $HOME/.mailaddress ] && [ -z $EMAIL ]; then
+    echo "ERROR: Email not specified and can't find file '$HOME/.mailaddress'."\
+         "Please specify an email using '-m EMAIL' or create"\
+         "'$HOME/.mailaddress' and populate it with the email address to which"\
+         "notifications should be sent."
     exit 2
 fi
 
 PROC_NAME=$1
-EMAIL=$(cat $HOME/.mailaddress)
 
-echo "[$(date '+%F %R')]" "Monitoring process '$PROC_NAME'."
-echo "[$(date '+%F %R')]" "Will send email to $EMAIL when the process exits."
+if [ -z $EMAIL ]; then
+    EMAIL=$(cat $HOME/.mailaddress)
+fi
+
+echo "[$(date '+%F %R')]" "Monitoring process '$PROC_NAME' for user $USER."
+echo "[$(date '+%F %R')]" "Email will be sent to $EMAIL when the process exits."
 
 FOUND=false
 START=$(date +%s)
@@ -28,8 +47,8 @@ while true; do
         sleep 6
     else
         if [ "$FOUND" = false ]; then
-            echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found."
-            exit 0
+            echo "[$(date '+%F %R')]" "No process named '$PROC_NAME' found. Exiting."
+            exit 3
         fi
         echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found anymore."
 
