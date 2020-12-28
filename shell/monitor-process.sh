@@ -23,7 +23,7 @@ FOUND=false
 START=$(date +%s)
 
 while true; do
-	if pgrep -x $PROC_NAME > /dev/null; then
+	if pgrep -x -u $USER $PROC_NAME > /dev/null; then
 		FOUND=true
 		sleep 6
 	else
