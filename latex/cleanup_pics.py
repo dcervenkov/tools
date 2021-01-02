@@ -39,8 +39,9 @@ def get_pics_from_tex(tex_files):
             searchlines = file.readlines()
         for line in searchlines:
             if "includegraphics" in line:
-                beg = line.index('{')
-                end = line.index('}')
+                skip = line.index("includegraphics")
+                beg = line.index('{', skip + 1)
+                end = line.index('}', skip + 1)
                 pics.append(line[beg+1:end])
             elif "begin{overpic}" in line:
                 # overpic lines have two sets of {}; skip first
