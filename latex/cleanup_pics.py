@@ -24,8 +24,12 @@ def decode_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("dir")
     parser.add_argument("files", nargs="+")
-    parser.add_argument("-D", "--dry-run", action="store_true",
-                        help="don't move any files, just list what would be done")
+    parser.add_argument(
+        "-D",
+        "--dry-run",
+        action="store_true",
+        help="don't move any files, just list what would be done",
+    )
     args = parser.parse_args()
 
     return args.dry_run, args.dir, args.files
@@ -40,15 +44,15 @@ def get_pics_from_tex(tex_files):
         for line in searchlines:
             if "includegraphics" in line:
                 skip = line.index("includegraphics")
-                beg = line.index('{', skip + 1)
-                end = line.index('}', skip + 1)
-                pics.append(line[beg+1:end])
+                beg = line.index("{", skip + 1)
+                end = line.index("}", skip + 1)
+                pics.append(line[beg + 1 : end])
             elif "begin{overpic}" in line:
                 # overpic lines have two sets of {}; skip first
-                skip = line.index('}')
-                beg = line.index('{', skip + 1)
-                end = line.index('}', skip + 1)
-                pics.append(line[beg+1:end])
+                skip = line.index("}")
+                beg = line.index("{", skip + 1)
+                end = line.index("}", skip + 1)
+                pics.append(line[beg + 1 : end])
     return pics
 
 
@@ -69,8 +73,9 @@ def move_unused_files(all_files, used_files, used_dir, unused_dir, dry_run):
     for all_file in all_files:
         # The rsplit removes the extension but we also test with the extension
         # as LaTeX can do both
-        if ((all_file.rsplit('.', 1)[0] not in used_files) and
-                (all_file not in used_files)):
+        if (all_file.rsplit(".", 1)[0] not in used_files) and (
+            all_file not in used_files
+        ):
             relative_path = os.path.relpath(all_file, used_dir)
             new_path = os.path.join(unused_dir, relative_path)
             new_dir_path = os.path.dirname(new_path)
@@ -127,12 +132,16 @@ def main():
     real_paths = get_pics_from_dir(pic_dir)
     tex_paths = get_pics_from_tex(tex_filenames)
     unused_dir = os.path.join(os.path.split(pic_dir)[0], NOT_USED_DIR)
-    num_moved, size_moved = move_unused_files(real_paths, tex_paths, pic_dir, unused_dir, dry_run)
+    num_moved, size_moved = move_unused_files(
+        real_paths, tex_paths, pic_dir, unused_dir, dry_run
+    )
     delete_empty_dirs.num_deleted = 0
     delete_empty_dirs(pic_dir, dry_run)
 
-    print(f"Moved {num_moved} ({size_moved / (1024 * 1024):.1f} MB) "
-          f"unused files to directory '{NOT_USED_DIR}'.")
+    print(
+        f"Moved {num_moved} ({size_moved / (1024 * 1024):.1f} MB) "
+        f"unused files to directory '{NOT_USED_DIR}'."
+    )
     if delete_empty_dirs.num_deleted:
         print(f"Deleted {delete_empty_dirs.num_deleted} empty directories.")
 
