@@ -1,12 +1,15 @@
 #!/bin/bash
 
-while getopts "m:u:" opt; do
+while getopts "m:u:r:" opt; do
   case $opt in
     m)
         EMAIL="$OPTARG"
     ;;
     u)
         USER="$OPTARG"
+    ;;
+    r)
+        REPEAT="$OPTARG"
     ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
@@ -35,11 +38,16 @@ if [ -z $EMAIL ]; then
     EMAIL=$(cat $HOME/.mailaddress)
 fi
 
+if [ -z $REPEAT ]; then
+    REPEAT=1
+fi
+
 echo "[$(date '+%F %R')]" "Monitoring process '$PROC_NAME' for user $USER."
 echo "[$(date '+%F %R')]" "Email will be sent to $EMAIL when the process exits."
 
 FOUND=false
 START=$(date +%s)
+MISSED=0
 
 while true; do
     if pgrep -x -u $USER $PROC_NAME > /dev/null; then
@@ -50,14 +58,20 @@ while true; do
             echo "[$(date '+%F %R')]" "No process named '$PROC_NAME' found. Exiting."
             exit 3
         fi
-        echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found anymore."
+        MISSED=$((MISSED+1))
+        if [ $MISSED -ge $REPEAT ]; then
+            echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found anymore."
 
-        END=$(date +%s)
-        HOURS=$(echo "scale=0; ($END - $START) / 3600" | bc -l )
-        MINUTES=$(echo "scale=0; (($END - $START) % 3600)/60" | bc -l )
+            END=$(date +%s)
+            HOURS=$(echo "scale=0; ($END - $START) / 3600" | bc -l )
+            MINUTES=$(echo "scale=0; (($END - $START) % 3600)/60" | bc -l )
 
-        (echo "Monitored process '$PROC_NAME' could no longer be found at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$PROC_NAME Finished" $EMAIL) && echo "Mail sent."
+            (echo "Monitored process '$PROC_NAME' could no longer be found at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$PROC_NAME Finished" $EMAIL) && echo "Mail sent."
 
-        exit 0
+            exit 0
+        else
+            echo "[$(date '+%F %R')]" "Process '$PROC_NAME' not found; will check again."
+            sleep 6
+        fi
     fi
 done
