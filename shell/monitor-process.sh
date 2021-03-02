@@ -52,6 +52,7 @@ MISSED=0
 while true; do
     if pgrep -x -u $USER $PROC_NAME > /dev/null; then
         FOUND=true
+        MISSED=0
         sleep 6
     else
         if [ "$FOUND" = false ]; then
