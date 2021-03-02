@@ -21,7 +21,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-if [ ! -f $HOME/.mailaddress ] && [ -z $EMAIL ]; then
+if [ ! -f "$HOME/.mailaddress" ] && [ -z "$EMAIL" ]; then
     echo "ERROR: Email not specified and can't find file '$HOME/.mailaddress'."\
          "Please specify an email using '-m EMAIL' or create"\
          "'$HOME/.mailaddress' and populate it with the email address to which"\
@@ -29,14 +29,13 @@ if [ ! -f $HOME/.mailaddress ] && [ -z $EMAIL ]; then
     exit 2
 fi
 
-DIRECTORY=$(realpath $1)
+DIRECTORY=$(realpath "$1")
 
-if [ -z $EMAIL ]; then
-    EMAIL=$(cat $HOME/.mailaddress)
+if [ -z "$EMAIL" ]; then
+    EMAIL=$(cat "$HOME/.mailaddress")
 fi
 
-DU_OUTPUT=$(du -s ${DIRECTORY})
-if [[ $? != 0 ]]; then
+if ! du -s "${DIRECTORY}"; then
     exit 3
 fi
 
@@ -51,7 +50,7 @@ LAST_SIZE=0
 START=$(date +%s)
 
 while true; do
-    SIZE=$(du -s ${DIRECTORY} | cut -f1)
+    SIZE=$(du -s "${DIRECTORY}" | cut -f1)
     if [[ $SIZE -gt $LAST_SIZE ]] ; then
         LAST_SIZE=$SIZE
         sleep $SLEEP_INTERVAL
@@ -62,7 +61,7 @@ while true; do
         HOURS=$(echo "scale=0; ($END - $START) / 3600" | bc -l )
         MINUTES=$(echo "scale=0; (($END - $START) % 3600)/60" | bc -l )
 
-        (echo "Monitored directory '$DIRECTORY' stopped growing at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$DIRECTORY Stopped Growing" $EMAIL) && echo "Mail sent."
+        (echo "Monitored directory '$DIRECTORY' stopped growing at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$DIRECTORY Stopped Growing" "$EMAIL") && echo "Mail sent."
 
         exit 0
     fi
