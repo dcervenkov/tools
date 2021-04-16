@@ -71,7 +71,7 @@ while true; do
         HOURS=$(echo "scale=0; ($END - $START) / 3600" | bc -l )
         MINUTES=$(echo "scale=0; (($END - $START) % 3600)/60" | bc -l )
 
-        (echo "Monitored process '$PROC_NAME' could no longer be found at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$PROC_NAME Finished" "$EMAIL") && echo "Mail sent."
+        (echo "Monitored command '$COMMAND' changed its exit from $ORIG_EXIT_CODE to $EXIT_CODE at $(date) after approximately $HOURS hours and $MINUTES minutes." | mail -s "$COMMAND Exit Code Changed" "$EMAIL") && echo "Mail sent."
         exit
     else
         FOUND=true
