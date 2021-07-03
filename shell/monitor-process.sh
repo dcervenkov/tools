@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts "m:u:r:" opt; do
+while getopts "m:u:r:f" opt; do
   case $opt in
     m)
         EMAIL="$OPTARG"
@@ -10,6 +10,9 @@ while getopts "m:u:r:" opt; do
     ;;
     r)
         REPEAT="$OPTARG"
+    ;;
+    f)
+        FULL=1
     ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
@@ -42,6 +45,13 @@ if [ -z "$REPEAT" ]; then
     REPEAT=1
 fi
 
+if [ -z "$FULL" ]; then
+    ARGS="-x"
+else
+    echo "[$(date '+%F %R')]" "Will match against the full command."
+    ARGS="-f"
+fi
+
 echo "[$(date '+%F %R')]" "Monitoring process '$PROC_NAME' for user $USER."
 echo "[$(date '+%F %R')]" "Email will be sent to $EMAIL when the process exits."
 
@@ -50,7 +60,7 @@ START=$(date +%s)
 MISSED=0
 
 while true; do
-    if pgrep -x -u "$USER" "$PROC_NAME" > /dev/null; then
+    if pgrep "$ARGS" -u "$USER" "$PROC_NAME" > /dev/null; then
         FOUND=true
         MISSED=0
         sleep 6
