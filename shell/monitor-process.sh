@@ -60,7 +60,7 @@ START=$(date +%s)
 MISSED=0
 
 while true; do
-    if pgrep "$ARGS" -u "$USER" "$PROC_NAME" > /dev/null; then
+    if pgrep "$ARGS" -lu "$USER" "$PROC_NAME" | grep -v monitor-process > /dev/null; then
         FOUND=true
         MISSED=0
         sleep 6
