@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+"""Replace Placeholder Lines
+
+This module replaces placeholder lines in a file by contents of another file.
+
+Usage:
+    ./replace_placeholder_lines.py [--keyword "#KEYWORD"] <FILE>
+
+This will go through every line in <FILE> and will try to replace all lines
+starting with '#KEYWORD' by the contents of a file specified by the rest of the
+line (the rest of the line is interpreted as a path).
+"""
+
 import argparse
 import sys
 
