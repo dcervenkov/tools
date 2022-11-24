@@ -35,7 +35,7 @@ if [ -z "$EMAIL" ]; then
     EMAIL=$(cat "$HOME/.mailaddress")
 fi
 
-if ! du -bs "${TARGET}"; then
+if ! du -bs "${TARGET}" > /dev/null; then
     exit 3
 fi
 
@@ -45,7 +45,6 @@ fi
 
 echo "[$(date '+%F %R')]" "Monitoring the size of '$TARGET' every ${SLEEP_INTERVAL}s."
 echo "[$(date '+%F %R')]" "Email will be sent to $EMAIL when the target stops growing."
-fflush
 
 LAST_SIZE=0
 START=$(date +%s)
