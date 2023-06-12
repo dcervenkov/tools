@@ -48,6 +48,7 @@ fi
 
 echo "[$(date '+%F %R')]" "Monitoring exit code of '$COMMAND'."
 echo "[$(date '+%F %R')]" "Email will be sent to $EMAIL when the command exit code changes."
+echo "[$(date '+%F %R')]" "Getting initial exit code..."
 
 FOUND=false
 START=$(date +%s)
